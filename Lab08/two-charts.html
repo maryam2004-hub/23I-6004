@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Task 2 - Two Charts (fixed)</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; }
+    svg { max-width: 100%; display: block; margin-bottom: 30px; }
+  </style>
+</head>
+<body>
+  <h2>Chart 1: Average Body Mass by Species</h2>
+  <svg id="chart" width="700" height="450"></svg>
+
+  <h2>Chart 2: Number of Penguins per Island</h2>
+  <svg id="chart2" width="700" height="450"></svg>
+
+  <script>
+    (function () {
+    const svg = d3.select("#chart");
+    const width = 700;
+    const height = 450;
+    const margin = { top: 30, right: 30, bottom: 70, left: 80 };
+    const innerWidth = width - margin.left - margin.right;
+    const innerHeight = height - margin.top - margin.bottom;
+
+    const chart = svg.append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    d3.csv(
+      "https://raw.githubusercontent.com/cran/palmerpenguins/master/inst/extdata/penguins.csv",
+      d3.autoType
+    ).then(data => {
+      data = data.filter(d => d.species && d.body_mass_g != null);
+      const summary = Array.from(
+        d3.rollup(data, v => d3.mean(v, d => d.body_mass_g), d => d.species),
+        ([name, value]) => ({ name, value })
+      );
+
+      const x = d3.scaleBand()
+        .domain(summary.map(d => d.name))
+        .range([0, innerWidth])
+        .padding(0.3);
+
+      const y = d3.scaleLinear()
+        .domain([0, d3.max(summary, d => d.value)])
+        .nice()
+        .range([innerHeight, 0]);
+
+      chart.append("g")
+        .attr("transform", `translate(0,${innerHeight})`)
+        .call(d3.axisBottom(x));
+      chart.append("g").call(d3.axisLeft(y));
+
+      const maxValue = d3.max(summary, d => d.value);
+      chart.selectAll("rect")
+        .data(summary)
+        .join("rect")
+        .attr("x", d => x(d.name))
+        .attr("y", d => y(d.value))
+        .attr("width", x.bandwidth())
+        .attr("height", d => innerHeight - y(d.value))
+        .attr("fill", d => d.value === maxValue ? "red" : "blue");
+
+      chart.append("text")
+        .attr("x", innerWidth / 2).attr("y", -5)
+        .attr("text-anchor", "middle")
+        .style("font-size", "16px")
+        .text("Average Body Mass by Species");
+
+      chart.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -innerHeight / 2).attr("y", -55)
+        .attr("text-anchor", "middle")
+        .text("Body Mass (g)");
+    });
+    })();
+  </script>
+
+  <script>
+    (function () {
+    const svg = d3.select("#chart2");
+    const width = 700;
+    const height = 450;
+    const margin = { top: 30, right: 30, bottom: 70, left: 80 };
+    const innerWidth = width - margin.left - margin.right;
+    const innerHeight = height - margin.top - margin.bottom;
+
+    const chart = svg.append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    d3.csv(
+      "https://raw.githubusercontent.com/cran/palmerpenguins/master/inst/extdata/penguins.csv",
+      d3.autoType
+    ).then(data => {
+      const summary = Array.from(
+        d3.rollup(data, v => v.length, d => d.island),
+        ([name, value]) => ({ name, value })
+      );
+
+      const x = d3.scaleBand()
+        .domain(summary.map(d => d.name))
+        .range([0, innerWidth])
+        .padding(0.3);
+
+      const y = d3.scaleLinear()
+        .domain([0, d3.max(summary, d => d.value)])
+        .nice()
+        .range([innerHeight, 0]);
+
+      chart.append("g")
+        .attr("transform", `translate(0,${innerHeight})`)
+        .call(d3.axisBottom(x));
+      chart.append("g").call(d3.axisLeft(y));
+
+      const maxValue = d3.max(summary, d => d.value);
+      chart.selectAll("rect")
+        .data(summary)
+        .join("rect")
+        .attr("x", d => x(d.name))
+        .attr("y", d => y(d.value))
+        .attr("width", x.bandwidth())
+        .attr("height", d => innerHeight - y(d.value))
+        .attr("fill", d => d.value === maxValue ? "red" : "blue");
+
+      chart.append("text")
+        .attr("x", innerWidth / 2).attr("y", -5)
+        .attr("text-anchor", "middle")
+        .style("font-size", "16px")
+        .text("Number of Penguins per Island");
+
+      chart.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -innerHeight / 2).attr("y", -55)
+        .attr("text-anchor", "middle")
+        .text("Number of Penguins");
+    });
+    })();
+  </script>
+
+</body>
+</html>
